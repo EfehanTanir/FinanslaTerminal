@@ -1,0 +1,7 @@
+streamlit
+yfinance
+feedparser
+textblob
+pandas
+plotly
+deep-translator
