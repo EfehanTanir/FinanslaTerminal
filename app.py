@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from deep_translator import GoogleTranslator
 
 # --- 1. SAYFA AYARLARI ---
-st.set_page_config(page_title="Finansla Open Test Terminal", layout="wide", page_icon="🦅")
+st.set_page_config(page_title="Finansla PRO Terminal V18", layout="wide", page_icon="🦅")
 st.title("🦅 Finansla.net | Borsa İstihbarat ve Analiz Terminali")
 
 st.caption("ℹ️ **BİLGİ:** ABD Hisseleri: **AAPL, TSLA** | Borsa İstanbul Hisseleri için Sonuna .IS ekleyiniz örnek: **THYAO.IS, EREGL.IS**")
@@ -102,10 +102,15 @@ try:
             else:
                 gunluk_degisim = 0.0
 
-        # 2. SEÇİLEN PERİYOT GETİRİSİ (GRAFİK İÇİN)
-        donem_basi_fiyat = veri['Close'].iloc[0]
-        donem_sonu_fiyat = veri['Close'].iloc[-1]
-        donemsel_getiri = ((donem_sonu_fiyat - donem_basi_fiyat) / donem_basi_fiyat) * 100
+        # 2. SEÇİLEN PERİYOT GETİRİSİ (GRAFİK İÇİN) - DÜZELTME BURADA YAPILDI
+        if secilen_periyot == "1d":
+            # Eğer 1 Gün seçiliyse, grafiğin üzerindeki oran ile sol üstteki oran AYNI olsun.
+            donemsel_getiri = gunluk_degisim
+        else:
+            # Diğer periyotlarda (1 Ay, 1 Yıl vb.) grafiğin başı ve sonu arasındaki fark alınır.
+            donem_basi_fiyat = veri['Close'].iloc[0]
+            donem_sonu_fiyat = veri['Close'].iloc[-1]
+            donemsel_getiri = ((donem_sonu_fiyat - donem_basi_fiyat) / donem_basi_fiyat) * 100
         
         getiri_renk = "green" if donemsel_getiri > 0 else "red"
         getiri_ikon = "🚀" if donemsel_getiri > 0 else "🔻"
@@ -135,7 +140,13 @@ try:
         k1, k2, k3, k4, k5 = st.columns(5)
         para_birimi = info.get('currency', '$')
         
-        k1.metric("Fiyat", f"{para_birimi}{current_price:.2f}", f"%{gunluk_degisim:.2f} (Günlük)")
+        # YÜZDE FORMAT DÜZELTMESİ (V17'den korundu)
+        if gunluk_degisim < 0:
+            delta_str = f"-%{abs(gunluk_degisim):.2f} (Günlük)"
+        else:
+            delta_str = f"%{gunluk_degisim:.2f} (Günlük)"
+
+        k1.metric("Fiyat", f"{para_birimi}{current_price:.2f}", delta_str)
         
         rsi_val = veri['RSI'].iloc[-1] if not pd.isna(veri['RSI'].iloc[-1]) else 50
         k2.metric("RSI Gücü", f"{rsi_val:.1f}", "30-70 Normal")
@@ -280,4 +291,3 @@ with st.container(border=True):
     
 
     st.caption("© 2025 Finansla.net | Tüm Hakları Saklıdır. | Efehan Tanırgan Efehan@finansla.net")
-
