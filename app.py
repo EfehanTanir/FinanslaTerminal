@@ -8,14 +8,14 @@ import plotly.graph_objects as go
 from deep_translator import GoogleTranslator
 
 # --- 1. SAYFA AYARLARI ---
-st.set_page_config(page_title="Finansla PRO Ultimate V16", layout="wide", page_icon="🦅")
+st.set_page_config(page_title="Finansla Open Test Terminal", layout="wide", page_icon="🦅")
 st.title("🦅 Finansla.net | Borsa İstihbarat ve Analiz Terminali")
 
 st.caption("ℹ️ **BİLGİ:** ABD Hisseleri: **AAPL, TSLA** | Borsa İstanbul Hisseleri için Sonuna .IS ekleyiniz örnek: **THYAO.IS, EREGL.IS**")
 st.markdown("---")
 
 # --- 2. KONTROL PANELİ ---
-st.sidebar.header("🎛️ Komuta Merkezi")
+st.sidebar.header("Finansla.net | Hisseler")
 hisse_kodu = st.sidebar.text_input("Hisse Sembolü", "NVDA") 
 
 # --- ZAMAN ARALIĞI TUŞLARI ---
@@ -280,3 +280,4 @@ with st.container(border=True):
     
 
     st.caption("© 2025 Finansla.net | Tüm Hakları Saklıdır. | Efehan Tanırgan Efehan@finansla.net")
+
