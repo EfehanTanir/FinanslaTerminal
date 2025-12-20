@@ -278,4 +278,5 @@ with st.container(border=True):
     **Finansla** platformu içinde bulunan hiçbir bilgi; yatırım tavsiyesi, yatırım olanağı veya yatırım fırsatı olarak değerlendirilmemelidir. Yatırımcı, vereceği kararlardan bizzat kendisi sorumludur. Bu siteyi ziyaret etmenizle birlikte, bu sorumluluk reddi beyanını kabul etmiş sayılırsınız.
     """)
     
-    st.caption("© 2025 Finansla.net | Tüm Hakları Saklıdır. | Burdur, Türkiye")
+
+    st.caption("© 2025 Finansla.net | Tüm Hakları Saklıdır. | Efehan Tanırgan Efehan@finansla.net")
