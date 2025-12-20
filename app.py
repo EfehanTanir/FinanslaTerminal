@@ -22,14 +22,14 @@ hisse_kodu = st.sidebar.text_input("Hisse Sembolü", "NVDA")
 st.sidebar.subheader("📅 Zaman Aralığı")
 aralik_secimi = st.sidebar.radio(
     "Periyot Seç", 
-    options=["1G", "5G", "1A", "6A", "YTD", "1Y", "5Y", "MAX"],
+    options=["1G", "5G", "1A", "6A", "YTD", "1Y", "5Y",],
     horizontal=True, 
     index=5 
 )
 
 periyot_map = {
     "1G": "1d", "5G": "5d", "1A": "1mo", "6A": "6mo", 
-    "YTD": "ytd", "1Y": "1y", "5Y": "5y", "MAX": "max"
+    "YTD": "ytd", "1Y": "1y", "5Y": "5y",
 }
 secilen_periyot = periyot_map[aralik_secimi]
 
@@ -291,3 +291,4 @@ with st.container(border=True):
     
 
     st.caption("© 2025 Finansla.net | Tüm Hakları Saklıdır. | Efehan Tanırgan Efehan@finansla.net")
+
