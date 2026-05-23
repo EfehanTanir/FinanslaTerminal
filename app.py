@@ -9,6 +9,19 @@ from deep_translator import GoogleTranslator
 
 # --- 1. SAYFA AYARLARI ---
 st.set_page_config(page_title="Finansla PRO Terminal V18", layout="wide", page_icon="🦅", initial_sidebar_state="collapsed")
+st.markdown("""
+<style>
+@media (max-width: 768px) {
+    .block-container {
+        padding: 1rem 0.5rem !important;
+    }
+    div[data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
 st.title("🦅 Finansla.net | Borsa İstihbarat ve Analiz Terminali")
 st.caption("ℹ️ **BİLGİ:** ABD Hisseleri: **AAPL, TSLA** | Borsa İstanbul Hisseleri için Sonuna .IS ekleyiniz örnek: **THYAO.IS, EREGL.IS**")
 st.markdown("---")
