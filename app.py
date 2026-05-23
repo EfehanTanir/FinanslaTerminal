@@ -10,36 +10,33 @@ from deep_translator import GoogleTranslator
 # --- 1. SAYFA AYARLARI ---
 st.set_page_config(page_title="Finansla PRO Terminal V18", layout="wide", page_icon="🦅", initial_sidebar_state="collapsed")
 st.title("🦅 Finansla.net | Borsa İstihbarat ve Analiz Terminali")
-
 st.caption("ℹ️ **BİLGİ:** ABD Hisseleri: **AAPL, TSLA** | Borsa İstanbul Hisseleri için Sonuna .IS ekleyiniz örnek: **THYAO.IS, EREGL.IS**")
 st.markdown("---")
 
-# --- 2. KONTROL PANELİ ---
-st.sidebar.header("Finansla.net | Hisseler")
-hisse_kodu = st.sidebar.text_input("Hisse Sembolü", "NVDA") 
+# --- 2. ÜST KONTROL PANELİ ---
+col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
+with col1:
+    hisse_kodu = st.text_input("🔍 Hisse Sembolü", "NVDA")
+with col2:
+    aralik_secimi = st.selectbox("📅 Periyot", ["1G", "5G", "1A", "6A", "YTD", "1Y", "5Y"], index=5)
+with col3:
+    goster_sma20 = st.checkbox("SMA 20", value=True)
+    goster_sma50 = st.checkbox("SMA 50", value=True)
+with col4:
+    goster_bollinger = st.checkbox("Bollinger", value=True)
+with col5:
+    st.write("")
+    st.write("")
+    if st.button("Analizi Başlat 🚀"):
+        st.rerun()
 
-# --- ZAMAN ARALIĞI TUŞLARI ---
-st.sidebar.subheader("📅 Zaman Aralığı")
-aralik_secimi = st.sidebar.radio(
-    "Periyot Seç", 
-    options=["1G", "5G", "1A", "6A", "YTD", "1Y", "5Y",],
-    horizontal=True, 
-    index=5 
-)
+st.markdown("---")
 
 periyot_map = {
-    "1G": "1d", "5G": "5d", "1A": "1mo", "6A": "6mo", 
+    "1G": "1d", "5G": "5d", "1A": "1mo", "6A": "6mo",
     "YTD": "ytd", "1Y": "1y", "5Y": "5y",
 }
 secilen_periyot = periyot_map[aralik_secimi]
-
-st.sidebar.subheader("📈 Grafik Katmanları")
-goster_sma20 = st.sidebar.checkbox("SMA 20 (Kısa Vade)", value=True)
-goster_sma50 = st.sidebar.checkbox("SMA 50 (Orta Vade)", value=True)
-goster_bollinger = st.sidebar.checkbox("Bollinger Bantları", value=True)
-
-if st.sidebar.button("Analizi Başlat 🚀"):
-    st.rerun()
 
 # --- FONKSİYONLAR ---
 def tarih_formatla(tarih_str):
@@ -58,14 +55,13 @@ def buyuk_sayi_formatla(sayi):
 # --- 3. HESAPLAMA MOTORU ---
 try:
     ticker = yf.Ticker(hisse_kodu)
-    
-    # Akıllı Interval (Grafik detayını artırmak için)
+
     kullanilan_interval = "1d"
     if secilen_periyot == "1d": kullanilan_interval = "15m"
     elif secilen_periyot == "5d": kullanilan_interval = "60m"
 
     veri = ticker.history(period=secilen_periyot, interval=kullanilan_interval)
-    info = ticker.info 
+    info = ticker.info
 
     if not veri.empty:
         # --- İNDİKATÖRLER ---
@@ -81,19 +77,17 @@ try:
             veri['SMA50'] = veri['Close'].rolling(window=50).mean()
         else:
             veri['SMA50'] = None
-        
+
         delta = veri['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
         veri['RSI'] = 100 - (100 / (1 + rs))
-        
+
         # --- KRİTİK HESAPLAMALAR ---
-        
-        # 1. SOL ÜST KÖŞE İÇİN GÜNLÜK DEĞİŞİM (SABİT)
         current_price = info.get('currentPrice') or info.get('regularMarketPrice') or veri['Close'].iloc[-1]
         previous_close = info.get('previousClose') or info.get('regularMarketPreviousClose')
-        
+
         if previous_close:
             gunluk_degisim = ((current_price - previous_close) / previous_close) * 100
         else:
@@ -102,27 +96,22 @@ try:
             else:
                 gunluk_degisim = 0.0
 
-        # 2. SEÇİLEN PERİYOT GETİRİSİ (GRAFİK İÇİN) - DÜZELTME BURADA YAPILDI
         if secilen_periyot == "1d":
-            # Eğer 1 Gün seçiliyse, grafiğin üzerindeki oran ile sol üstteki oran AYNI olsun.
             donemsel_getiri = gunluk_degisim
         else:
-            # Diğer periyotlarda (1 Ay, 1 Yıl vb.) grafiğin başı ve sonu arasındaki fark alınır.
             donem_basi_fiyat = veri['Close'].iloc[0]
             donem_sonu_fiyat = veri['Close'].iloc[-1]
             donemsel_getiri = ((donem_sonu_fiyat - donem_basi_fiyat) / donem_basi_fiyat) * 100
-        
+
         getiri_renk = "green" if donemsel_getiri > 0 else "red"
         getiri_ikon = "🚀" if donemsel_getiri > 0 else "🔻"
 
-        # Volatilite & Drawdown
         gunluk_getiri = veri['Close'].pct_change()
-        volatilite = gunluk_getiri.std() * (252 ** 0.5) * 100 
+        volatilite = gunluk_getiri.std() * (252 ** 0.5) * 100
         rolling_max = veri['Close'].cummax()
         drawdown = veri['Close'] / rolling_max - 1.0
         max_drawdown = drawdown.min() * 100
 
-        # Trend Yönü
         trend_yonu = "NÖTR ⚪"
         trend_farki = "%0.0"
         if veri['SMA50'] is not None and not pd.isna(veri['SMA50'].iloc[-1]):
@@ -135,36 +124,31 @@ try:
                 trend_farki = f"-%{((sma50_son - current_price) / sma50_son) * 100:.1f} (Zayıf)"
 
         # --- EKRAN TASARIMI ---
-        
-        # 1. TEMEL KPI KARTLARI
         k1, k2, k3, k4, k5 = st.columns(5)
         para_birimi = info.get('currency', '$')
-        
-        # YÜZDE FORMAT DÜZELTMESİ (V17'den korundu)
+
         if gunluk_degisim < 0:
             delta_str = f"-%{abs(gunluk_degisim):.2f} (Günlük)"
         else:
             delta_str = f"%{gunluk_degisim:.2f} (Günlük)"
 
         k1.metric("Fiyat", f"{para_birimi}{current_price:.2f}", delta_str)
-        
         rsi_val = veri['RSI'].iloc[-1] if not pd.isna(veri['RSI'].iloc[-1]) else 50
         k2.metric("RSI Gücü", f"{rsi_val:.1f}", "30-70 Normal")
         k3.metric("Oynaklık (Risk)", f"%{volatilite:.1f}", "Volatilite")
         k4.metric("Max Kayıp", f"%{max_drawdown:.1f}", "Zirveden Dip")
         k5.metric("Genel Trend", trend_yonu, trend_farki)
 
-        # 2. TEMEL ANALİZ KARNESİ
         st.markdown("---")
         st.subheader("📊 Temel Analiz Karnesi")
-        
+
         t1, t2, t3, t4, t5 = st.columns(5)
         piyasa_degeri = buyuk_sayi_formatla(info.get('marketCap'))
         fk_orani = info.get('trailingPE', 'Yok')
         hedef_fiyat = info.get('targetMeanPrice', 'Yok')
         temettu = info.get('dividendYield', 0)
         sektor = info.get('sector', 'Bilinmiyor')
-        
+
         temettu_yuzde = f"%{temettu*100:.2f}" if temettu else "Yok"
         potansiyel = "Nötr"
         if isinstance(hedef_fiyat, (int, float)) and hedef_fiyat > current_price:
@@ -187,20 +171,19 @@ try:
             st.write(ozet_tr)
             st.caption(f"CEO: {info.get('companyOfficers', [{}])[0].get('name', 'Bilinmiyor')}")
 
-        # 3. GRAFİK
         st.subheader(f"📉 Fiyat Grafiği ({aralik_secimi}) | Dönemsel Getiri: :{getiri_renk}[{getiri_ikon} %{donemsel_getiri:.2f}]")
-        
+
         fig = go.Figure()
         fig.add_trace(go.Candlestick(x=veri.index, open=veri['Open'], high=veri['High'], low=veri['Low'], close=veri['Close'], name='Fiyat'))
-        
-        if goster_sma20 and veri['SMA20'] is not None: 
+
+        if goster_sma20 and veri['SMA20'] is not None:
             fig.add_trace(go.Scatter(x=veri.index, y=veri['SMA20'], line=dict(color='orange', width=1), name='SMA 20'))
-        if goster_sma50 and veri['SMA50'] is not None: 
+        if goster_sma50 and veri['SMA50'] is not None:
             fig.add_trace(go.Scatter(x=veri.index, y=veri['SMA50'], line=dict(color='blue', width=1), name='SMA 50'))
         if goster_bollinger and veri['Upper'] is not None:
             fig.add_trace(go.Scatter(x=veri.index, y=veri['Upper'], line=dict(color='gray', width=0.5, dash='dot'), name='Üst Bant'))
             fig.add_trace(go.Scatter(x=veri.index, y=veri['Lower'], line=dict(color='gray', width=0.5, dash='dot'), name='Alt Bant'))
-            
+
         fig.update_layout(height=600, xaxis_rangeslider_visible=True, template="plotly_dark", title=f"{hisse_kodu.upper()} ({aralik_secimi})")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -209,7 +192,6 @@ try:
         else:
             st.info("⚠️ RSI için yeterli veri yok.")
 
-        # 4. YORUM VE HABERLER
         st.markdown("---")
         c1, c2 = st.columns(2)
         with c1:
@@ -232,10 +214,10 @@ try:
         simdi = datetime.now()
         ay_isimleri = {1:'Ocak',2:'Şubat',3:'Mart',4:'Nisan',5:'Mayıs',6:'Haziran',7:'Temmuz',8:'Ağustos',9:'Eylül',10:'Ekim',11:'Kasım',12:'Aralık'}
         st.subheader(f"📰 Güncel Haberler ({ay_isimleri[simdi.month]} {simdi.year})")
-        
+
         rss_url = f"https://news.google.com/rss/search?q={hisse_kodu}+stock+news&hl=en-US&gl=US&ceid=US:en"
         feed = feedparser.parse(rss_url)
-        
+
         if feed.entries:
             cols = st.columns(2)
             counter = 0
@@ -245,7 +227,7 @@ try:
                     if pub.tm_year < simdi.year or (pub.tm_year == simdi.year and pub.tm_mon < simdi.month): continue
                 except: continue
                 if counter >= 6: break
-                
+
                 try: baslik_tr = GoogleTranslator(source='auto', target='tr').translate(entry.title)
                 except: baslik_tr = entry.title
                 try: skor = TextBlob(entry.title).sentiment.polarity
@@ -253,7 +235,7 @@ try:
                 if skor > 0.05: renk, ikon = "green", "🟢"
                 elif skor < -0.05: renk, ikon = "red", "🔴"
                 else: renk, ikon = "gray", "⚪"
-                
+
                 with cols[counter % 2]:
                     with st.container(border=True):
                         st.markdown(f"**{baslik_tr}**")
@@ -288,7 +270,5 @@ with st.container(border=True):
     
     **Finansla** platformu içinde bulunan hiçbir bilgi; yatırım tavsiyesi, yatırım olanağı veya yatırım fırsatı olarak değerlendirilmemelidir. Yatırımcı, vereceği kararlardan bizzat kendisi sorumludur. Bu siteyi ziyaret etmenizle birlikte, bu sorumluluk reddi beyanını kabul etmiş sayılırsınız.
     """)
-    
 
     st.caption("© 2025 Finansla.net | Tüm Hakları Saklıdır. | Efehan Tanırgan Efehan@finansla.net")
-
