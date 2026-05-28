@@ -1,14 +1,25 @@
+import os
 import streamlit as st
 import pandas as pd
 from fredapi import Fred
 
 # --- API BAĞLANTISI ---
-# Streamlit secrets üzerinden API anahtarını güvenle çekiyoruz
-try:
-    fred = Fred(api_key=st.secrets["FRED_API_KEY"])
-except Exception as e:
-    st.error("⚠️ FRED API Anahtarı bulunamadı. Lütfen .streamlit/secrets.toml dosyasını kontrol edin.")
+# 1. Try to get the key from Railway Environment Variables
+api_key = os.getenv("FRED_API_KEY")
+
+# 2. If it's not in Railway (meaning you are testing locally), try Streamlit secrets
+if not api_key:
+    try:
+        api_key = st.secrets["FRED_API_KEY"]
+    except:
+        pass
+
+# 3. If neither worked, stop the app and show the error
+if not api_key:
+    st.error("⚠️ FRED API Anahtarı bulunamadı. Lütfen Railway Environment Variables veya .streamlit/secrets.toml dosyasını kontrol edin.")
     st.stop()
+
+fred = Fred(api_key=api_key)
 
 # --- SAYFA TASARIMI ---
 st.header("🌍 Global Makro Ticaret ve Tedarik Zinciri")
