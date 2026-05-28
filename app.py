@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from deep_translator import GoogleTranslator
 
 # --- 1. SAYFA AYARLARI ---
-st.set_page_config(page_title="Finansla PRO Terminal V18", layout="wide", page_icon="🦅", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Finansla PRO Terminal V18", layout="wide", page_icon="🦅", initial_sidebar_state="expanded")
 st.markdown("""
 <style>
 @media (max-width: 768px) {
